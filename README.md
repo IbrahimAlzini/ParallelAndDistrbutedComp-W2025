@@ -1,1 +1,1 @@
-This repository is used for DSAI3202 course and Lab
+This repository is used for DSAI3202- Parallel And Distrbuted Comp course and Lab 
