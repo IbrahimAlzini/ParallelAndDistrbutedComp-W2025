@@ -5,7 +5,7 @@ import time
 def process_sum(start, end, queue):
     queue.put(calculate_sum(start, end))
 
-def run_processes(N=10000000, num_processes=6):
+def run_processes(N=10000000, num_processes=4):
     total_start_time = time.time()
     step = N // num_processes
     processes = []
