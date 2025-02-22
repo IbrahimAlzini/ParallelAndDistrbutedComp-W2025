@@ -17,6 +17,11 @@
 # run_queue()
 
 from src.performance_analysis import run_performance_analysis
+from src.part2 import run_part2
 
 if __name__ == "__main__":
+    print("Part 1:")
     run_performance_analysis()
+    print("**************************************")
+    print("Part 2:")
+    run_part2()

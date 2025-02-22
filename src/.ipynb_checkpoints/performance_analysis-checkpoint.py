@@ -4,8 +4,9 @@ from src.processes import run_processes
 
 def run_performance_analysis():
     N = 10000000
-    num_threads = 4
-    num_processes = 4
+    num_threads = 6
+    num_processes = 6
+    np = 6
     
     sum_seq, time_seq = run_seq(N)
     sum_threads, time_threads = run_threads(N, num_threads)
@@ -14,15 +15,15 @@ def run_performance_analysis():
     speedup_threads = time_seq / time_threads
     speedup_processes = time_seq / time_processes
     
-    efficiency_threads = speedup_threads / num_threads
-    efficiency_processes = speedup_processes / num_processes
+    efficiency_threads = speedup_threads / np
+    efficiency_processes = speedup_processes / np
     
-    p = 0.95  # Assuming 95% of program is parallelizable
-    speedup_amdahl_threads = 1 / ((1 - p) + (p / num_threads))
-    speedup_amdahl_processes = 1 / ((1 - p) + (p / num_processes))
+    p = 0.90  # Assuming 90% of program is parallelizable
+    speedup_amdahl_threads = 1 / ((1 - p) + (p / np))
+    speedup_amdahl_processes = 1 / ((1 - p) + (p / np))
     
-    speedup_gustafson_threads = num_threads - (1 - p) * num_threads
-    speedup_gustafson_processes = num_processes - (1 - p) * num_processes
+    speedup_gustafson_threads = np - (1 - p) * np
+    speedup_gustafson_processes = np - (1 - p) * np
     
     print("Performance Analysis:")
     print(f"Speedup (Threads): {speedup_threads}")

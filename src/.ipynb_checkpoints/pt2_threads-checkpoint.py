@@ -1,18 +1,19 @@
 import threading
-import itertools
 import time
+import itertools
 from math import sqrt
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_squared_error, mean_absolute_percentage_erro
+from sklearn.metrics import mean_squared_error, mean_absolute_percentage_error
 
-
-def threaded_parameter_search():
+def run_threaded(X_train_filled, y_train, X_val_filled, y_val):
+    """Runs a threaded parameter search."""
     start_time = time.time()
+
     n_estimators_range = [10, 25, 50, 100, 200, 300, 400]
     max_features_range = ['sqrt', 'log2', None]
     max_depth_range = [1, 2, 5, 10, 20, None]
-
     param_combinations = list(itertools.product(n_estimators_range, max_features_range, max_depth_range))
+
     num_threads = 4
     chunk_size = len(param_combinations) // num_threads
     chunks = [param_combinations[i*chunk_size:(i+1)*chunk_size] for i in range(num_threads)]
@@ -39,7 +40,7 @@ def threaded_parameter_search():
             y_val_pred = rf_model.predict(X_val_filled)
             rmse = sqrt(mean_squared_error(y_val, y_val_pred))
             mape = mean_absolute_percentage_error(y_val, y_val_pred) * 100
-            print(f"The parameters: {n_estimators}, {max_features}, {max_depth}. RMSE: {rmse}, MAPE: {mape}%")
+            
             with lock:
                 if rmse < best_rmse:
                     best_rmse = rmse
@@ -59,6 +60,8 @@ def threaded_parameter_search():
     for thread in threads:
         thread.join()
 
-    print(f"The best parameters {best_parameters} for RMSE = {best_rmse}, MAPE: {best_mape}%")
     end_time = time.time()
-    print(f"The threaded execution time is {end_time - start_time}")
+    threading_time = end_time - start_time
+    print(f"Threaded Execution Time: {threading_time}s")
+    print(f"Best Parameters: {best_parameters}, RMSE: {best_rmse}, MAPE: {best_mape}%")
+    return threading_time
