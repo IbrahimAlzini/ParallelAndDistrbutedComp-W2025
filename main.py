@@ -1,12 +1,7 @@
-from mpi4py import MPI
+from src.tasks import power
+from src.dispatch_tasks import dispatch
 
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
+if __name__ == "__main__":
+    results = dispatch()
+    print(results[:10])
 
-if rank == 0:
-    data = {'a': 7, 'b': 3.14}
-    print(f'On process {rank}, sending: {data}')
-    comm.send(data, dest=1, tag=11)
-elif rank == 1:
-    data = comm.recv(source=0, tag=11)
-    print(f'On process {rank}, data received: {data}')
