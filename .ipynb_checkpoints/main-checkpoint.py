@@ -1,13 +1,22 @@
-from src.square_computation import run_square_tests
-from src.connection_pool import run_connection_pool_test
+# # For Sequential genetic_algorithm_trial  
+# import time 
+# from src.genetic_algorithm_trial import run_genetic_algorithm
 
-def main():
-    # print("Running Square Computation Tests...")
-    # run_square_tests(10**6)
-    # run_square_tests(10**7)
+# if __name__ == "__main__":
+#     print("Starting sequential  Genetic Algorithm Execution...")
+#     start_time = time.time()
+#     run_genetic_algorithm()
+#     end_time = time.time()
+#     sequential_time = end_time - start_time
+#     print(f"Sequential execution Time: {sequential_time} seconds")
+#     print("Genetic sequential Algorithm Execution Completed.")
 
-    print("\nRunning Connection Pool Test...")
-    run_connection_pool_test()
+import time
+from src.parallel_genetic_algorithm import run_parallel_genetic_algorithm
 
 if __name__ == "__main__":
-    main()
+    print("Starting Parallel Genetic Algorithm Execution...")
+    start_time = time.time()
+    run_parallel_genetic_algorithm()
+    end_time = time.time()
+    print(f"Parallel execution time: {end_time - start_time} seconds")
