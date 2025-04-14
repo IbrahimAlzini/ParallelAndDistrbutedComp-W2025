@@ -1,608 +1,589 @@
-# DSAI 3202 - Assignment 1 Part 2: Navigating the City with Genetic Algorithms
+# Maze Explorer Game
 
-## Overview
+A simple maze exploration game built with Pygame where you can either manually navigate through a maze or watch an automated solver find its way to the exit.
 
-This project uses a Genetic Algorithm (GA) to optimize the delivery route for a fleet of delivery vehicles in a city. The city is represented as a graph, with nodes as delivery points and edges representing distances. Initially, the problem is solved for a **single vehicle**, aiming to visit all delivery points **exactly once** and return to the depot, while **minimizing total distance traveled**.
+## Getting Started
 
----
+### 1. Connect to Your VM
 
-## Contents
+1. Open **<span style="color:red">Visual Studio Code</span>**
+2. Install the "Remote - SSH" extension if you haven't already
+3. Connect to your VM using SSH:
+   - Press `Ctrl+Shift+P` to open the command palette
+   - Type "Remote-SSH: Connect to Host..."
+   - Enter your VM's SSH connection details
+   - Enter your credentials when prompted
 
-- `city_distances.csv` – Distance matrix between 32 city nodes (100000 = no direct path).
-- `genetic_algorithms_functions.py` – Core GA functions (fitness, selection, crossover, mutation).
-- `genetic_algorithm_trial.py` – Main script for sequential GA execution.
-- `main.py` – Entry point for running sequential and parallel GA version using MPI (just uncomment the part that you want to run).
-- `city_distances_extended.csv` – Extended city with 100 nodes and 4000 edges (for scalability test).
-- `parallel_genetic_algorithm.py` – Main script for parallel GA version using MPI.
+4. Install required VS Code extensions:
+   - Press `Ctrl+Shift+X` to open the Extensions view
+   - Search for and install "Python Extension Pack"
+   - Search for and install "Jupyter"
+   - These extensions will provide Python language support, debugging, and Jupyter notebook functionality
 
----
+### 2. Project Setup
 
-## Genetic Algorithm Summary
+1. Create and activate a Conda environment:
+```bash
+# Create a new conda environment with Python 3.12
+conda create -n maze-runner python=3.12
 
-### Key Concepts
+# Activate the conda environment
+conda activate maze-runner
+```
 
-- **Selection:** Tournament selection chooses the fittest individuals.
-- **Crossover:** Order crossover (OX) generates valid offspring.
-- **Mutation:** Swaps nodes to introduce genetic diversity.
-- **Fitness:** Total distance of the route (negative for minimization). Infeasible routes are heavily penalized.
+2. Install Jupyter and the required dependencies:
+```bash
+# Install Jupyter
+pip install jupyter
 
----
-## Completing the functions 
-There are two function to complete in `genetic_algorithms_functions.py` and they were completed as the following :
-def calculate_fitness(route, distance_matrix):
-    """
-    calculate_fitness function: total distance traveled by the car.
+# Install project dependencies
+pip install -r requirements.txt
+```
 
-    Parameters:
-        - route (list): A list representing the order of nodes visited in the route.
-        - distance_matrix (numpy.ndarray): A matrix of the distances between nodes.
-            A 2D numpy array where the element at position [i, j] represents the distance between node i and node j.
-    Returns:
-        - float: The negative total distance traveled (negative because we want to minimize distance).
-           Returns a large negative penalty if the route is infeasible.
-    """
-    total_distance = 0
+3. Open the project in Visual Studio Code and select the interpreter:
+   - Press `Ctrl+Shift+P` to open the command palette
+   - Type "Python: Select Interpreter"
+   - Choose the interpreter from the `maze-runner` environment
 
-    for i in range(len(route) - 1):
-        node1, node2 = route[i], route[i + 1]
-        distance = distance_matrix[node1][node2]
+## Running the Game
 
-        # If the distance is infeasible (disconnected nodes)
-        if distance == 100000:
-            return 1e6  # Large penalty, but not always the worst
+### Basic Usage
+Run the game with default settings (30x30 random maze):
+```bash
+python main.py
+```
 
-        total_distance += distance
+### Manual Mode (Interactive)
+Use arrow keys to navigate through the maze:
+```bash
+# Run with default random maze
+python main.py
 
-    # Include the return trip to depot (node 0)
-    last_leg = distance_matrix[route[-1]][route[0]]
-    if last_leg == 100000:
-        return 1e6  # Large penalty if the last leg is invalid
-    total_distance += last_leg
+# Run with static maze
+python main.py --type static
 
-    return -total_distance
+# Run with custom maze dimensions
+python main.py --width 40 --height 40
+```
 
-def select_in_tournament(population, scores, number_tournaments=4, tournament_size=3):
-    """
-    Tournament selection for genetic algorithm.
+### Automated Mode (Explorer)
+The explorer will automatically solve the maze and show statistics:
 
-    Parameters:
-        - population (list): The current population of routes.
-        - scores (np.array): The calculate_fitness scores corresponding to each individual in the population.
-        - number_tournaments (int): The number of tournaments to run in the population.
-        - tournament_size (int): The number of individuals to compete in the tournaments.
+#### Without Visualization (Text-only)
+```bash
+# Run with default random maze
+python main.py --auto
 
-    Returns:
-        - list: A list of selected individuals for crossover.
-    """
-    selected = []
-    for _ in range(number_tournaments):
-        indices = np.random.choice(len(population), tournament_size, replace=False)
-        best_idx = indices[np.argmax(scores[indices])]
-        selected.append(population[best_idx])
-    return selected
+# Run with static maze
+python main.py --type static --auto
+
+# Run with custom maze dimensions
+python main.py --width 40 --height 40 --auto
+```
+
+#### With Visualization (Watch the Explorer in Action)
+```bash
+# Run with default random maze
+python main.py --auto --visualize
+
+# Run with static maze
+python main.py --type static --auto --visualize
+
+# Run with custom maze dimensions
+python main.py --width 40 --height 40 --auto --visualize
+```
+
+### Jupyter Notebook Visualization
+To run the maze visualization in Jupyter Notebook:
+
+1. Make sure you have activated your virtual environment and installed all dependencies
+2. Open the project in Visual Studio Code
+3. Select the correct Python interpreter:
+   - Press `Ctrl+Shift+P` to open the command palette
+   - Type "Python: Select Interpreter"
+   - Choose the interpreter from your created environment:
+     - If using venv: Select the interpreter from `venv/bin/python` (Linux/Mac) or `venv\Scripts\python.exe` (Windows)
+     - If using Conda: Select the interpreter from the `maze-runner` environment
+4. Open the `maze_visualization.ipynb` notebook in VS Code
+5. VS Code will automatically start a Jupyter server
+6. Run all cells to see the maze visualization in action
+
+Available arguments:
+- `--type`: Choose between "random" (default) or "static" maze generation
+- `--width`: Set maze width (default: 30, ignored for static mazes)
+- `--height`: Set maze height (default: 30, ignored for static mazes)
+- `--auto`: Enable automated maze exploration
+- `--visualize`: Show real-time visualization of the automated exploration
+
+## Maze Types
+
+### Random Maze (Default)
+- Generated using depth-first search algorithm
+- Different layout each time you run the program
+- Customizable dimensions
+- Default type if no type is specified
+
+### Static Maze
+- Predefined maze pattern
+- Fixed dimensions (50x50)
+- Same layout every time
+- Width and height arguments are ignored
+
+## How to Play
+
+### Manual Mode
+1. Controls:
+- Use the arrow keys to move the player (<span style="color:blue">blue circle</span>)
+- Start at the <span style="color:green">green square</span>
+- Reach the <span style="color:red">red square</span> to win
+- Avoid the <span style="color:black">black walls</span>
+
+### Automated Mode
+- The explorer uses the right-hand rule algorithm to solve the maze
+- Automatically finds the path from start to finish
+- Displays detailed statistics at the end:
+  - Total time taken
+  - Total moves made
+  - Number of backtrack operations
+  - Average moves per second
+- Works with both random and static mazes
+- Optional real-time visualization:
+  - Shows the explorer's position in <span style="color:blue">blue</span>
+  - Updates at 30 frames per second
+  - Pauses for 2 seconds at the end to show the final state
+
+## Project Structure
+
+```
+maze-runner/
+├── src/
+│   ├── __init__.py
+│   ├── constants.py
+│   ├── maze.py
+│   ├── player.py
+│   ├── game.py
+│   ├── explorer.py
+│   └── visualization.py
+├── main.py
+├── maze_visualization.ipynb
+├── requirements.txt
+└── README.md
+```
+
+## Code Overview
+
+### Main Files
+- `main.py`: Entry point of the game. Handles command-line arguments and initializes the game with specified parameters.
+- `requirements.txt`: Lists all Python package dependencies required to run the game.
+
+### Source Files (`src/` directory)
+- `__init__.py`: Makes the src directory a Python package.
+- `constants.py`: Contains all game constants like colors, screen dimensions, cell sizes, and game settings.
+- `maze.py`: Implements maze generation using depth-first search algorithm and handles maze-related operations.
+- `player.py`: Manages player movement, collision detection, and rendering of the player character.
+- `game.py`: Core game implementation including the main game loop, event handling, and game state management.
+- `explorer.py`: Implements automated maze solving using the right-hand rule algorithm and visualization.
+- `visualization.py`: Contains functions for maze visualization.
+
+## Game Features
+
+- Randomly generated maze using depth-first search algorithm
+- Predefined static maze option
+- Manual and automated exploration modes
+- Real-time visualization of automated exploration
+- Smooth player movement
+- Collision detection with walls
+- Win condition when reaching the exit
+- Performance metrics (time and moves) for automated solving
+
+## Development
+
+The project is organized into several modules:
+- `constants.py`: Game constants and settings
+- `maze.py`: Maze generation and management
+- `player.py`: Player movement and rendering
+- `game.py`: Game implementation and main loop
+- `explorer.py`: Automated maze solving implementation and visualization
+- `visualization.py`: Functions for maze visualization
+
+## Getting Started with the Assignment
+
+Before attempting the questions below, please follow these steps:
+
+1. Open the `maze_visualization.ipynb` notebook in VS Code
+2. Run all cells in the notebook to:
+   - Understand how the maze is generated
+   - See how the explorer works
+   - Observe the visualization of the maze solving process
+   - Get familiar with the statistics and metrics
+
+This will help you better understand the system before attempting the questions.
+
+## Student Questions
+
+### Question 1 (10 points)
+Explain how the automated maze explorer works. Your answer should include:
+1. The algorithm used by the explorer
+2. How it handles getting stuck in loops
+3. The backtracking strategy it employs
+4. The statistics it provides at the end of exploration
+
+To answer this question:
+1. Run the explorer both with and without visualization
+2. Observe its behavior in different maze types
+3. Analyze the statistics it provides
+4. Read the source code in `explorer.py` to understand the implementation details
+
+#### Answer: 
+1. The algorithm used by the explorer:
+The explorer uses the Right-Hand Rule, which always try to keep it's the right hand on the wall.
+based on my understanding of the code, It Implements it as the following:
+First, turn right and try to move. If that fails, try to move forward. If that fails, turn left and try to move. If all directions are blocked, perform a 180° turn and backtrack. 
+
+2. How it handles getting stuck in loops:
+The explorer handles getting stuck in loops by using the "is_stuck(self) -> bool" function which return true if the last 3 positions were the same
+
+3. The backtracking strategy it employs:
+When the explorer is stuck, it activates the backtracking mechanism to return to a decision point as the following:
+find_backtrack_path() searches the move history in reverse to find the most recent position with multiple unvisited directions, then a backtrack path is generated from the current position to that fork. The explorer moves along this path until it reaches a new branching point.
+Backtracking operations are counted via self.backtrack_count for reporting.
+
+4. The statistics it provides at the end of exploration
+
+=== Maze Exploration Statistics ===
+Total time taken: 0.00 seconds
+Total moves made: 1279
+Number of backtrack operations: 0
+Average moves per second: 728577.32
+
+These are calculated using:
+time_taken = self.end_time - self.start_time
+len(self.moves) for move count
+self.backtrack_count for backtracks
+Moves per second = len(self.moves) / time_taken
+
+This data is then printed via the print_statistics() function.
+
+This explorer guarantees a path, which includes both the static and random mazes in this project, but  it's not efficient.
+
+### Question 2 (30 points)
+Modify the main program to run multiple maze explorers simultaneously. This is because we want to find the best route out of the maze. Your solution should:
+1. Allow running multiple explorers in parallel
+2. Collect and compare statistics from all explorers
+3. Display a summary of results showing which explorer performed best
+
+*Hints*:
+- To get 20 points, use use multiprocessing.
+- To get 30 points, use MPI4Py on multiple machines.
+- Use Celery and RabbitMQ to distribute the exploration tasks. You will get full marks plus a bonus.
+- Implement a task queue system
+- Do not visualize the exploration, just run it in parallel
+- Store results for comparison
+
+**To answer this question:** 
+1. Study the current explorer implementation
+2. Design a parallel execution system
+3. Implement task distribution
+4. Create a results comparison system
+
+#### Answer :
+To answer this question I created two files to test both multiprocessing and MPI4Py in the test folder (i didn't know how to change the main file to run them while keeping it's functionality)
+
+- To get 20 points, use use multiprocessing:
+run_explorers_parallel.py is the file created to perform multiprocessing.
+how to run :
+python test/run_explorers_parallel.py
+
+output :
+(maze-runner) student@vg-DSAI-3202-13:~/ParallelAndDistrbutedComp-W2025$ python run_explorers_parallel.py
+pygame 2.6.1 (SDL 2.28.4, Python 3.12.2)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+=== Maze Exploration Statistics ===
+Total time taken: 0.00 seconds
+Total moves made: 1279
+Number of backtrack operations: 0
+Average moves per second: 922847.90
+==================================
 
 
----
-## Explanation of `genetic_algorithm_trial.py`
+=== Maze Exploration Statistics ===
+Total time taken: 0.00 seconds
+Total moves made: 1279
+Number of backtrack operations: 0
+Average moves per second: 706787.20
+==================================
 
-The script loads the distance matrix from `city_distances.csv`and initializes parameters (population size, mutation rate, generations, etc.).
-Then it generates an initial population and Iteratively evolves the population using selection, crossover, mutation.
-Then it Applies stagnation control to avoid getting stuck in local minima.
-Outputs the best route and its total distance.
 
----
+=== Maze Exploration Statistics ===
+Total time taken: 0.00 seconds
+Total moves made: 1279
+Number of backtrack operations: 0
+Average moves per second: 664007.28
+==================================
 
-## The Sequential output 
 
-The program took 8s to run and produced a feasible path :
+=== Maze Exploration Statistics ===
+Total time taken: 0.00 seconds
+Total moves made: 1279
+Number of backtrack operations: 0
+Average moves per second: 909856.65
+==================================
 
-(parallel) student@vg-DSAI-3202-13:~/ParallelAndDistrbutedComp-W2025$ python main.py
-Starting sequential  Genetic Algorithm Execution...
-Generation 0: Best calculate_fitness = -1796.0
-Generation 1: Best calculate_fitness = -1796.0
-Generation 2: Best calculate_fitness = -1796.0
-Generation 3: Best calculate_fitness = -1796.0
-Generation 4: Best calculate_fitness = -1796.0
-Regenerating population at generation 5 due to stagnation
-Generation 6: Best calculate_fitness = -1945.0
-Generation 7: Best calculate_fitness = -1945.0
-Generation 8: Best calculate_fitness = -1945.0
-Generation 9: Best calculate_fitness = -1945.0
-Generation 10: Best calculate_fitness = -1945.0
-Regenerating population at generation 11 due to stagnation
-Generation 12: Best calculate_fitness = -1945.0
-Generation 13: Best calculate_fitness = -1945.0
-Generation 14: Best calculate_fitness = -1945.0
-Generation 15: Best calculate_fitness = -1945.0
-Regenerating population at generation 16 due to stagnation
-Generation 17: Best calculate_fitness = -1945.0
-Generation 18: Best calculate_fitness = -1945.0
-Generation 19: Best calculate_fitness = -1945.0
-Generation 20: Best calculate_fitness = -1945.0
-Regenerating population at generation 21 due to stagnation
-Generation 22: Best calculate_fitness = -1945.0
-Generation 23: Best calculate_fitness = -1945.0
-Generation 24: Best calculate_fitness = -1945.0
-Generation 25: Best calculate_fitness = -1945.0
-Regenerating population at generation 26 due to stagnation
-Generation 27: Best calculate_fitness = -1945.0
-Generation 28: Best calculate_fitness = -1945.0
-Generation 29: Best calculate_fitness = -1945.0
-Generation 30: Best calculate_fitness = -1945.0
-Regenerating population at generation 31 due to stagnation
-Generation 32: Best calculate_fitness = -1945.0
-Generation 33: Best calculate_fitness = -1945.0
-Generation 34: Best calculate_fitness = -1945.0
-Generation 35: Best calculate_fitness = -1945.0
-Regenerating population at generation 36 due to stagnation
-Generation 37: Best calculate_fitness = -1963.0
-Generation 38: Best calculate_fitness = -1963.0
-Generation 39: Best calculate_fitness = -1963.0
-Generation 40: Best calculate_fitness = -1963.0
-Generation 41: Best calculate_fitness = -1963.0
-Regenerating population at generation 42 due to stagnation
-Generation 43: Best calculate_fitness = -1963.0
-Generation 44: Best calculate_fitness = -1963.0
-Generation 45: Best calculate_fitness = -1963.0
-Generation 46: Best calculate_fitness = -1963.0
-Regenerating population at generation 47 due to stagnation
-Generation 48: Best calculate_fitness = -1963.0
-Generation 49: Best calculate_fitness = -1963.0
-Generation 50: Best calculate_fitness = -1963.0
-Generation 51: Best calculate_fitness = -1963.0
-Regenerating population at generation 52 due to stagnation
-Generation 53: Best calculate_fitness = -1963.0
-Generation 54: Best calculate_fitness = -1963.0
-Generation 55: Best calculate_fitness = -1963.0
-Generation 56: Best calculate_fitness = -1963.0
-Regenerating population at generation 57 due to stagnation
-Generation 58: Best calculate_fitness = -1976.0
-Generation 59: Best calculate_fitness = -1976.0
-Generation 60: Best calculate_fitness = -1976.0
-Generation 61: Best calculate_fitness = -1976.0
-Generation 62: Best calculate_fitness = -1976.0
-Regenerating population at generation 63 due to stagnation
-Generation 64: Best calculate_fitness = -1976.0
-Generation 65: Best calculate_fitness = -1976.0
-Generation 66: Best calculate_fitness = -1976.0
-Generation 67: Best calculate_fitness = -1976.0
-Regenerating population at generation 68 due to stagnation
-Generation 69: Best calculate_fitness = -1976.0
-Generation 70: Best calculate_fitness = -1976.0
-Generation 71: Best calculate_fitness = -1976.0
-Generation 72: Best calculate_fitness = -1976.0
-Regenerating population at generation 73 due to stagnation
-Generation 74: Best calculate_fitness = -1976.0
-Generation 75: Best calculate_fitness = -1976.0
-Generation 76: Best calculate_fitness = -1976.0
-Generation 77: Best calculate_fitness = -1976.0
-Regenerating population at generation 78 due to stagnation
-Generation 79: Best calculate_fitness = -1976.0
-Generation 80: Best calculate_fitness = -1976.0
-Generation 81: Best calculate_fitness = -1976.0
-Generation 82: Best calculate_fitness = -1976.0
-Regenerating population at generation 83 due to stagnation
-Generation 84: Best calculate_fitness = -1976.0
-Generation 85: Best calculate_fitness = -1976.0
-Generation 86: Best calculate_fitness = -1976.0
-Generation 87: Best calculate_fitness = -1976.0
-Regenerating population at generation 88 due to stagnation
-Generation 89: Best calculate_fitness = -1976.0
-Generation 90: Best calculate_fitness = -1976.0
-Generation 91: Best calculate_fitness = -1976.0
-Generation 92: Best calculate_fitness = -1976.0
-Regenerating population at generation 93 due to stagnation
-Generation 94: Best calculate_fitness = -2115.0
-Generation 95: Best calculate_fitness = -2115.0
-Generation 96: Best calculate_fitness = -2115.0
-Generation 97: Best calculate_fitness = -2115.0
-Generation 98: Best calculate_fitness = -2115.0
-Regenerating population at generation 99 due to stagnation
-Generation 100: Best calculate_fitness = -2115.0
-Generation 101: Best calculate_fitness = -2115.0
-Generation 102: Best calculate_fitness = -2115.0
-Generation 103: Best calculate_fitness = -2115.0
-Regenerating population at generation 104 due to stagnation
-Generation 105: Best calculate_fitness = -2115.0
-Generation 106: Best calculate_fitness = -2115.0
-Generation 107: Best calculate_fitness = -2115.0
-Generation 108: Best calculate_fitness = -2115.0
-Regenerating population at generation 109 due to stagnation
-Generation 110: Best calculate_fitness = -2115.0
-Generation 111: Best calculate_fitness = -2115.0
-Generation 112: Best calculate_fitness = -2115.0
-Generation 113: Best calculate_fitness = -2115.0
-Regenerating population at generation 114 due to stagnation
-Generation 115: Best calculate_fitness = -2115.0
-Generation 116: Best calculate_fitness = -2115.0
-Generation 117: Best calculate_fitness = -2115.0
-Generation 118: Best calculate_fitness = -2115.0
-Regenerating population at generation 119 due to stagnation
-Generation 120: Best calculate_fitness = -2115.0
-Generation 121: Best calculate_fitness = -2115.0
-Generation 122: Best calculate_fitness = -2115.0
-Generation 123: Best calculate_fitness = -2115.0
-Regenerating population at generation 124 due to stagnation
-Generation 125: Best calculate_fitness = -2115.0
-Generation 126: Best calculate_fitness = -2115.0
-Generation 127: Best calculate_fitness = -2115.0
-Generation 128: Best calculate_fitness = -2115.0
-Regenerating population at generation 129 due to stagnation
-Generation 130: Best calculate_fitness = -2115.0
-Generation 131: Best calculate_fitness = -2115.0
-Generation 132: Best calculate_fitness = -2115.0
-Generation 133: Best calculate_fitness = -2115.0
-Regenerating population at generation 134 due to stagnation
-Generation 135: Best calculate_fitness = -2115.0
-Generation 136: Best calculate_fitness = -2115.0
-Generation 137: Best calculate_fitness = -2115.0
-Generation 138: Best calculate_fitness = -2115.0
-Regenerating population at generation 139 due to stagnation
-Generation 140: Best calculate_fitness = -2115.0
-Generation 141: Best calculate_fitness = -2115.0
-Generation 142: Best calculate_fitness = -2115.0
-Generation 143: Best calculate_fitness = -2115.0
-Regenerating population at generation 144 due to stagnation
-Generation 145: Best calculate_fitness = -2115.0
-Generation 146: Best calculate_fitness = -2115.0
-Generation 147: Best calculate_fitness = -2115.0
-Generation 148: Best calculate_fitness = -2115.0
-Regenerating population at generation 149 due to stagnation
-Generation 150: Best calculate_fitness = -2115.0
-Generation 151: Best calculate_fitness = -2115.0
-Generation 152: Best calculate_fitness = -2115.0
-Generation 153: Best calculate_fitness = -2115.0
-Regenerating population at generation 154 due to stagnation
-Generation 155: Best calculate_fitness = -2115.0
-Generation 156: Best calculate_fitness = -2115.0
-Generation 157: Best calculate_fitness = -2115.0
-Generation 158: Best calculate_fitness = -2115.0
-Regenerating population at generation 159 due to stagnation
-Generation 160: Best calculate_fitness = -2115.0
-Generation 161: Best calculate_fitness = -2115.0
-Generation 162: Best calculate_fitness = -2115.0
-Generation 163: Best calculate_fitness = -2115.0
-Regenerating population at generation 164 due to stagnation
-Generation 165: Best calculate_fitness = -2115.0
-Generation 166: Best calculate_fitness = -2115.0
-Generation 167: Best calculate_fitness = -2115.0
-Generation 168: Best calculate_fitness = -2115.0
-Regenerating population at generation 169 due to stagnation
-Generation 170: Best calculate_fitness = -2115.0
-Generation 171: Best calculate_fitness = -2115.0
-Generation 172: Best calculate_fitness = -2115.0
-Generation 173: Best calculate_fitness = -2115.0
-Regenerating population at generation 174 due to stagnation
-Generation 175: Best calculate_fitness = -2115.0
-Generation 176: Best calculate_fitness = -2115.0
-Generation 177: Best calculate_fitness = -2115.0
-Generation 178: Best calculate_fitness = -2115.0
-Regenerating population at generation 179 due to stagnation
-Generation 180: Best calculate_fitness = -2115.0
-Generation 181: Best calculate_fitness = -2115.0
-Generation 182: Best calculate_fitness = -2115.0
-Generation 183: Best calculate_fitness = -2115.0
-Regenerating population at generation 184 due to stagnation
-Generation 185: Best calculate_fitness = -2115.0
-Generation 186: Best calculate_fitness = -2115.0
-Generation 187: Best calculate_fitness = -2115.0
-Generation 188: Best calculate_fitness = -2115.0
-Regenerating population at generation 189 due to stagnation
-Generation 190: Best calculate_fitness = -2115.0
-Generation 191: Best calculate_fitness = -2115.0
-Generation 192: Best calculate_fitness = -2115.0
-Generation 193: Best calculate_fitness = -2115.0
-Regenerating population at generation 194 due to stagnation
-Generation 195: Best calculate_fitness = -2115.0
-Generation 196: Best calculate_fitness = -2115.0
-Generation 197: Best calculate_fitness = -2115.0
-Generation 198: Best calculate_fitness = -2115.0
-Regenerating population at generation 199 due to stagnation
-Best Solution: [0, 10, 7, 31, 23, 12, 9, 2, 21, 20, 29, 26, 24, 4, 3, 5, 16, 28, 18, 27, 8, 15, 19, 1, 11, 6, 22, 30, 25, 17, 13, 14]
-Total Distance:  -2115.0
-Sequential execution Time: 8.646604537963867 seconds
-Genetic sequential Algorithm Execution Completed.
 
----
-## 6.  Parallelize the code  `parallel_genetic_algorithm.py`
+--- Parallel Maze Solver Results ---
+Explorer 0:
+  Time Taken     : 0.00s
+  Moves Made     : 1279
+  Backtrack Ops  : 0
 
-- Fitness Evaluation was distributed since each individual's fitness is independent of others.
-After distribution, the population is split among multiple processes, and each process evaluates fitness for its portion. This should remove the bottleneck of single-threaded fitness computation, leading to a significant speedup.
+Explorer 1:
+  Time Taken     : 0.00s
+  Moves Made     : 1279
+  Backtrack Ops  : 0
 
-calculate_fitness_values = np.array([calculate_fitness(route, distance_matrix) for route in population])
-were changed to :
-local_fitness = np.array([calculate_fitness(route, distance_matrix) for route in local_pop])
+Explorer 2:
+  Time Taken     : 0.00s
+  Moves Made     : 1279
+  Backtrack Ops  : 0
 
-- Genetic Operators (Selection, Crossover, Mutation) were parallelized since each process can evolve its subset of the population without waiting for others.
-Now Selection, crossover, and mutation happen independently on each process, reducing synchronization needs.
-This avoids the single-process bottleneck and lets each process evolve its portion of the population.
+Explorer 3:
+  Time Taken     : 0.00s
+  Moves Made     : 1279
+  Backtrack Ops  : 0
 
-### performance metrics :
-unfortunately, the program didn't live up to expectations and ran in 5 min instead of 8 sec when it was sequential
+Best Explorer:
+  Explorer 0 with 1279 moves and 0.00s
 
-this makes the performance metrics as the following :
-speedup = 8/300 = 0.267 
-Efficiency = 0.267/6 = 0.004
+conclution :
+all explorers made the same number of moves and the only diffreance is the Average moves per second which was the best in explorer 0 : 922847.90
 
-### How to run :
-- check if the main.py would run  `parallel_genetic_algorithm.py`
-- mpirun -n 6 python main.py 
+##### - To get 30 points, use MPI4Py on multiple machines: 
+run_explorers_mpi.py was made to test mpi4py.
 
-### output:
-parallel) student@vg-DSAI-3202-13:~/ParallelAndDistrbutedComp-W2025$ mpirun -n 6 python main.py
-Starting Parallel Genetic Algorithm Execution...
-[DEBUG] MPI started with 6 processes.
-[DEBUG] Process 0: Loaded distance matrix.
-[DEBUG] Process 0: Generated initial population.
-Generation 0: Best Fitness = -1828.0
-Generation 1: Best Fitness = -1828.0
-Generation 2: Best Fitness = -1828.0
-Generation 3: Best Fitness = -1828.0
-Generation 4: Best Fitness = -1828.0
-[DEBUG] Process 0: Regenerating population at generation 5 due to stagnation
-Generation 5: Best Fitness = -1828.0
-Generation 6: Best Fitness = -1828.0
-Generation 7: Best Fitness = -1828.0
-Generation 8: Best Fitness = -1828.0
-Generation 9: Best Fitness = -1828.0
-[DEBUG] Process 0: Regenerating population at generation 10 due to stagnation
-Generation 10: Best Fitness = -1828.0
-Generation 11: Best Fitness = -1863.0
-Generation 12: Best Fitness = -1863.0
-Generation 13: Best Fitness = -1863.0
-Generation 14: Best Fitness = -1863.0
-Generation 15: Best Fitness = -1863.0
-[DEBUG] Process 0: Regenerating population at generation 16 due to stagnation
-Generation 16: Best Fitness = -1863.0
-Generation 17: Best Fitness = -2068.0
-Generation 18: Best Fitness = -2068.0
-Generation 19: Best Fitness = -2068.0
-Generation 20: Best Fitness = -2068.0
-Generation 21: Best Fitness = -2068.0
-[DEBUG] Process 0: Regenerating population at generation 22 due to stagnation
-Generation 22: Best Fitness = -2068.0
-Generation 23: Best Fitness = -2068.0
-Generation 24: Best Fitness = -2068.0
-Generation 25: Best Fitness = -2068.0
-Generation 26: Best Fitness = -2068.0
-[DEBUG] Process 0: Regenerating population at generation 27 due to stagnation
-Generation 27: Best Fitness = -2068.0
-Generation 28: Best Fitness = -2068.0
-Generation 29: Best Fitness = -2068.0
-Generation 30: Best Fitness = -2068.0
-Generation 31: Best Fitness = -2068.0
-[DEBUG] Process 0: Regenerating population at generation 32 due to stagnation
-Generation 32: Best Fitness = -2068.0
-Generation 33: Best Fitness = -2068.0
-Generation 34: Best Fitness = -2068.0
-Generation 35: Best Fitness = -2068.0
-Generation 36: Best Fitness = -2068.0
-[DEBUG] Process 0: Regenerating population at generation 37 due to stagnation
-Generation 37: Best Fitness = -2068.0
-Generation 38: Best Fitness = -2068.0
-Generation 39: Best Fitness = -2068.0
-Generation 40: Best Fitness = -2068.0
-Generation 41: Best Fitness = -2068.0
-[DEBUG] Process 0: Regenerating population at generation 42 due to stagnation
-Generation 42: Best Fitness = -2068.0
-Generation 43: Best Fitness = -2068.0
-Generation 44: Best Fitness = -2068.0
-Generation 45: Best Fitness = -2068.0
-Generation 46: Best Fitness = -2068.0
-[DEBUG] Process 0: Regenerating population at generation 47 due to stagnation
-Generation 47: Best Fitness = -2068.0
-Generation 48: Best Fitness = -2068.0
-Generation 49: Best Fitness = -2068.0
-Generation 50: Best Fitness = -2068.0
-Generation 51: Best Fitness = -2068.0
-[DEBUG] Process 0: Regenerating population at generation 52 due to stagnation
-Generation 52: Best Fitness = -2068.0
-Generation 53: Best Fitness = -2068.0
-Generation 54: Best Fitness = -2068.0
-Generation 55: Best Fitness = -2068.0
-Generation 56: Best Fitness = -2068.0
-[DEBUG] Process 0: Regenerating population at generation 57 due to stagnation
-Generation 57: Best Fitness = -2068.0
-Generation 58: Best Fitness = -2068.0
-Generation 59: Best Fitness = -2068.0
-Generation 60: Best Fitness = -2068.0
-Generation 61: Best Fitness = -2068.0
-[DEBUG] Process 0: Regenerating population at generation 62 due to stagnation
-Generation 62: Best Fitness = -2068.0
-Generation 63: Best Fitness = -2068.0
-Generation 64: Best Fitness = -2132.0
-Generation 65: Best Fitness = -2132.0
-Generation 66: Best Fitness = -2132.0
-Generation 67: Best Fitness = -2132.0
-Generation 68: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 69 due to stagnation
-Generation 69: Best Fitness = -2132.0
-Generation 70: Best Fitness = -2132.0
-Generation 71: Best Fitness = -2132.0
-Generation 72: Best Fitness = -2132.0
-Generation 73: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 74 due to stagnation
-Generation 74: Best Fitness = -2132.0
-Generation 75: Best Fitness = -2132.0
-Generation 76: Best Fitness = -2132.0
-Generation 77: Best Fitness = -2132.0
-Generation 78: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 79 due to stagnation
-Generation 79: Best Fitness = -2132.0
-Generation 80: Best Fitness = -2132.0
-Generation 81: Best Fitness = -2132.0
-Generation 82: Best Fitness = -2132.0
-Generation 83: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 84 due to stagnation
-Generation 84: Best Fitness = -2132.0
-Generation 85: Best Fitness = -2132.0
-Generation 86: Best Fitness = -2132.0
-Generation 87: Best Fitness = -2132.0
-Generation 88: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 89 due to stagnation
-Generation 89: Best Fitness = -2132.0
-Generation 90: Best Fitness = -2132.0
-Generation 91: Best Fitness = -2132.0
-Generation 92: Best Fitness = -2132.0
-Generation 93: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 94 due to stagnation
-Generation 94: Best Fitness = -2132.0
-Generation 95: Best Fitness = -2132.0
-Generation 96: Best Fitness = -2132.0
-Generation 97: Best Fitness = -2132.0
-Generation 98: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 99 due to stagnation
-Generation 99: Best Fitness = -2132.0
-Generation 100: Best Fitness = -2132.0
-Generation 101: Best Fitness = -2132.0
-Generation 102: Best Fitness = -2132.0
-Generation 103: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 104 due to stagnation
-Generation 104: Best Fitness = -2132.0
-Generation 105: Best Fitness = -2132.0
-Generation 106: Best Fitness = -2132.0
-Generation 107: Best Fitness = -2132.0
-Generation 108: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 109 due to stagnation
-Generation 109: Best Fitness = -2132.0
-Generation 110: Best Fitness = -2132.0
-Generation 111: Best Fitness = -2132.0
-Generation 112: Best Fitness = -2132.0
-Generation 113: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 114 due to stagnation
-Generation 114: Best Fitness = -2132.0
-Generation 115: Best Fitness = -2132.0
-Generation 116: Best Fitness = -2132.0
-Generation 117: Best Fitness = -2132.0
-Generation 118: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 119 due to stagnation
-Generation 119: Best Fitness = -2132.0
-Generation 120: Best Fitness = -2132.0
-Generation 121: Best Fitness = -2132.0
-Generation 122: Best Fitness = -2132.0
-Generation 123: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 124 due to stagnation
-Generation 124: Best Fitness = -2132.0
-Generation 125: Best Fitness = -2132.0
-Generation 126: Best Fitness = -2132.0
-Generation 127: Best Fitness = -2132.0
-Generation 128: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 129 due to stagnation
-Generation 129: Best Fitness = -2132.0
-Generation 130: Best Fitness = -2132.0
-Generation 131: Best Fitness = -2132.0
-Generation 132: Best Fitness = -2132.0
-Generation 133: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 134 due to stagnation
-Generation 134: Best Fitness = -2132.0
-Generation 135: Best Fitness = -2132.0
-Generation 136: Best Fitness = -2132.0
-Generation 137: Best Fitness = -2132.0
-Generation 138: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 139 due to stagnation
-Generation 139: Best Fitness = -2132.0
-Generation 140: Best Fitness = -2132.0
-Generation 141: Best Fitness = -2132.0
-Generation 142: Best Fitness = -2132.0
-Generation 143: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 144 due to stagnation
-Generation 144: Best Fitness = -2132.0
-Generation 145: Best Fitness = -2132.0
-Generation 146: Best Fitness = -2132.0
-Generation 147: Best Fitness = -2132.0
-Generation 148: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 149 due to stagnation
-Generation 149: Best Fitness = -2132.0
-Starting Parallel Genetic Algorithm Execution...
-Parallel execution time: 299.9599812030792 seconds
-Starting Parallel Genetic Algorithm Execution...
-Parallel execution time: 299.95508909225464 seconds
-Starting Parallel Genetic Algorithm Execution...
-Parallel execution time: 299.90678453445435 seconds
-Starting Parallel Genetic Algorithm Execution...
-Parallel execution time: 299.9483759403229 seconds
-Starting Parallel Genetic Algorithm Execution...
-Parallel execution time: 299.9615993499756 seconds
-Generation 150: Best Fitness = -2132.0
-Generation 151: Best Fitness = -2132.0
-Generation 152: Best Fitness = -2132.0
-Generation 153: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 154 due to stagnation
-Generation 154: Best Fitness = -2132.0
-Generation 155: Best Fitness = -2132.0
-Generation 156: Best Fitness = -2132.0
-Generation 157: Best Fitness = -2132.0
-Generation 158: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 159 due to stagnation
-Generation 159: Best Fitness = -2132.0
-Generation 160: Best Fitness = -2132.0
-Generation 161: Best Fitness = -2132.0
-Generation 162: Best Fitness = -2132.0
-Generation 163: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 164 due to stagnation
-Generation 164: Best Fitness = -2132.0
-Generation 165: Best Fitness = -2132.0
-Generation 166: Best Fitness = -2132.0
-Generation 167: Best Fitness = -2132.0
-Generation 168: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 169 due to stagnation
-Generation 169: Best Fitness = -2132.0
-Generation 170: Best Fitness = -2132.0
-Generation 171: Best Fitness = -2132.0
-Generation 172: Best Fitness = -2132.0
-Generation 173: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 174 due to stagnation
-Generation 174: Best Fitness = -2132.0
-Generation 175: Best Fitness = -2132.0
-Generation 176: Best Fitness = -2132.0
-Generation 177: Best Fitness = -2132.0
-Generation 178: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 179 due to stagnation
-Generation 179: Best Fitness = -2132.0
-Generation 180: Best Fitness = -2132.0
-Generation 181: Best Fitness = -2132.0
-Generation 182: Best Fitness = -2132.0
-Generation 183: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 184 due to stagnation
-Generation 184: Best Fitness = -2132.0
-Generation 185: Best Fitness = -2132.0
-Generation 186: Best Fitness = -2132.0
-Generation 187: Best Fitness = -2132.0
-Generation 188: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 189 due to stagnation
-Generation 189: Best Fitness = -2132.0
-Generation 190: Best Fitness = -2132.0
-Generation 191: Best Fitness = -2132.0
-Generation 192: Best Fitness = -2132.0
-Generation 193: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 194 due to stagnation
-Generation 194: Best Fitness = -2132.0
-Generation 195: Best Fitness = -2132.0
-Generation 196: Best Fitness = -2132.0
-Generation 197: Best Fitness = -2132.0
-Generation 198: Best Fitness = -2132.0
-[DEBUG] Process 0: Regenerating population at generation 199 due to stagnation
-Generation 199: Best Fitness = -2132.0
-Best Route: [0, 28, 15, 23, 3, 7, 24, 21, 2, 31, 10, 27, 29, 17, 13, 8, 26, 4, 11, 12, 9, 6, 14, 5, 16, 1, 20, 25, 19, 18, 30, 22]
-Total Distance: -2132.0
-Parallel execution time: 300.003867149353 seconds
+how to run :
+mpirun -n 5 test/python run_explorers_mpi.py
 
----
+(maze-runner) student@vg-DSAI-3202-13:~/ParallelAndDistrbutedComp-W2025/test$ mpirun -n 5 python run_explorers_mpi.py
+pygame 2.6.1 (SDL 2.28.4, Python 3.12.2)
+Hello from the pygame community. https://www.pygame.org/contribute.html
 
-## Enhancements 
+=== Maze Exploration Statistics ===
+Total time taken: 0.00 seconds
+Total moves made: 1279
+Number of backtrack operations: 0
+Average moves per second: 489507.69
+==================================
 
-### Distribution Over Multiple Machines 
-I tried sending my file to the machines in the machines.txt file but i was met with several errors because of the imported modes such as pandas and NumPy
+pygame 2.6.1 (SDL 2.28.4, Python 3.12.2)
+Hello from the pygame community. https://www.pygame.org/contribute.html
 
-I used the following command to run it :
-mpirun -hostfile machines.txt -n 18 python main.py
+=== Maze Exploration Statistics ===
+Total time taken: 0.00 seconds
+Total moves made: 1279
+Number of backtrack operations: 0
+Average moves per second: 432308.39
+==================================
 
----
+pygame 2.6.1 (SDL 2.28.4, Python 3.12.2)
+Hello from the pygame community. https://www.pygame.org/contribute.html
 
-## Large Scale Problem 
+=== Maze Exploration Statistics ===
+Total time taken: 0.00 seconds
+Total moves made: 1279
+Number of backtrack operations: 0
+Average moves per second: 318047.95
+==================================
 
-### How to Add More Cars 
-To support multiple vehicles we can Partition the node set among vehicles using clustering, KMeans for example.
-We could then run the GA on each vehicle's assigned cluster independently.
-And apply global synchronization to optimize fleet-wide efficiency.
+pygame 2.6.1 (SDL 2.28.4, Python 3.12.2)
+Hello from the pygame community. https://www.pygame.org/contribute.html
 
+=== Maze Exploration Statistics ===
+Total time taken: 0.00 seconds
+Total moves made: 1279
+Number of backtrack operations: 0
+Average moves per second: 328406.17
+==================================
+
+pygame 2.6.1 (SDL 2.28.4, Python 3.12.2)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+Running 4 explorers using MPI...
+
+
+--- MPI Maze Solving Results ---
+Explorer 1:
+  Time Taken     : 0.00s
+  Moves Made     : 1279
+  Backtrack Ops  : 0
+
+Explorer 2:
+  Time Taken     : 0.00s
+  Moves Made     : 1279
+  Backtrack Ops  : 0
+
+Explorer 3:
+  Time Taken     : 0.00s
+  Moves Made     : 1279
+  Backtrack Ops  : 0
+
+Explorer 4:
+  Time Taken     : 0.00s
+  Moves Made     : 1279
+  Backtrack Ops  : 0
+
+ Best Explorer:
+  Explorer 1 with 1279 moves and 0.00s
+
+conclution :
+all explorers made the same number of moves 
+
+### Question 3 (10 points)
+Analyze and compare the performance of different maze explorers on the static maze. Your analysis should:
+
+1. Run multiple explorers (at least 4 ) simultaneously on the static maze
+2. Collect and compare the following metrics for each explorer:
+   - Total time taken to solve the maze
+   - Number of moves made
+   - *Optional*:
+     - Number of backtrack operations
+
+3. What do you notice regarding the performance of the explorers? Explain the results and the observations you made.
+
+#### Answer :
+using the output of the run_explorers_parallel.py file :
+=== Maze Exploration Statistics ===
+Total time taken: 0.00 seconds
+Total moves made: 1279
+Number of backtrack operations: 0
+Average moves per second: 922847.90
+==================================
+
+
+=== Maze Exploration Statistics ===
+Total time taken: 0.00 seconds
+Total moves made: 1279
+Number of backtrack operations: 0
+Average moves per second: 706787.20
+==================================
+
+
+=== Maze Exploration Statistics ===
+Total time taken: 0.00 seconds
+Total moves made: 1279
+Number of backtrack operations: 0
+Average moves per second: 664007.28
+==================================
+
+
+=== Maze Exploration Statistics ===
+Total time taken: 0.00 seconds
+Total moves made: 1279
+Number of backtrack operations: 0
+Average moves per second: 909856.65
+==================================
+
+we can see that when we run 4 explorers simultaneously that they all used the same number of moves (1279) and the same amount of time. this is because we used the same explorer type wich will use the same sarching method. the only defferance are the Average moves per second on each explorer.
+
+### Question 4 (20 points)
+Based on your analysis from Question 3, propose and implement enhancements to the maze explorer to overcome its limitations. Your solution should:
+
+1. Identify and explain the main limitations of the current explorer:
+
+2. Propose specific improvements to the exploration algorithm:
+
+3. Implement at least two of the proposed improvements:
+
+Your answer should include:
+1. A detailed explanation of the identified limitations
+2. Documentation of your proposed improvements
+3. The modified code with clear comments explaining the changes
+
+#### Answer :
+After analyzing the performance of the original explorer, several limitations were identified:
+The right-hand rule is inherently greedy and non-optimal.
+The algorithm does not avoid revisiting paths, resulting in redundant moves.
+
+Two improvements were implemented in (src/explorer_bfs):
+Marking visited cells: This avoids revisiting already explored nodes.
+Switching to BFS: Breadth-First Search ensures the shortest path in unweighted grids, guaranteeing optimal move count.
+
+These improvements replaced the wall-following behavior with a complete traversal mechanism that avoids loops and minimizes path length. The explorer now terminates as soon as it reaches the exit with a reconstructed path, rather than relying on brute-force decisions or visual cues. And reduced the total moves to 128.
+
+##### output :
+(maze-runner) student@vg-DSAI-3202-13:~/ParallelAndDistrbutedComp-W2025$ python main.py --auto --type static
+pygame 2.6.1 (SDL 2.28.4, Python 3.12.2)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+=== Optimized BFS Maze Stats ===
+Total time taken: 0.00 seconds
+Total moves made: 128
+Backtracking: Not applicable (BFS doesn't backtrack)
+==================================
+
+Maze solved in 0.00 seconds
+Number of moves: 128
+Note: Width and height arguments were ignored for the static maze
+
+- and just as a test (not sure if it's allowed) I created a BFS search with path smoothing to reduce the number of movemns to a minmum in (src/BFSExplorer_PathSmoothing.py)
+
+how to run :
+python test/test_bfs_explorer_PathSmoothing.py
+
+output :
+(maze-runner) student@vg-DSAI-3202-13:~/ParallelAndDistrbutedComp-W2025$ python test/test_bfs_explorer_PathSmoothing.py 
+pygame 2.6.1 (SDL 2.28.4, Python 3.12.2)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+=== BFS Explorer Test (Static Maze with Path Smoothing) ===
+
+=== Optimized BFS Maze Stats (With Path Smoothing) ===
+Total time taken: 0.00 seconds
+Total moves made: 30
+Backtracking: Not applicable (BFS doesn't backtrack)
+==================================
+
+Total time taken : 0.0015 seconds
+Total moves made : 30
+===========================================================
+
+### Question 5 (20 points)
+
+Compare the performance of your enhanced explorer with the original:
+   - Run both versions on the static maze
+   - Collect and compare all relevant metrics
+   - Create visualizations showing the improvements
+   - Document the trade-offs of your enhancements
+Your answer should include:
+1. Performance comparison results and analysis
+2. Discussion of any trade-offs or new limitations introduced
+
+#### Answer
+After runinng the original right-hand-rule-based and the new BFS-based explorers on the static maze, i got the following results:
+original :
+=== Maze Exploration Statistics ===
+Total time taken: 0.00 seconds
+Total moves made: 1279
+Number of backtrack operations: 0
+Average moves per second: 747667.57
+==================================
+
+bfs:
+=== Optimized BFS Maze Stats ===
+Total time taken: 0.00 seconds
+Total moves made: 128
+Backtracking: Not applicable (BFS doesn't backtrack)
+==================================
+
+The original explorer completed the maze in 1279 moves while the BFS explorer solved the maze in only 128 moves without backtracking
+
+This shows that BFS guarantees an optimal path. However, BFS does consume more memory due to its need to store visited nodes and reconstruct the shortest path. Despite this, the trade-off is well justified for a better result.
+
+### Final points 6 (10 points)
+1. Solve the static maze in 150 moves or less to get 10 points.
+2. Solve the static maze in 135 moves or less to get 15 points.
+3. Solve the static maze in 130 moves or less to get 100% in your assignment.(done)
+
+### Bonus points
+1. Fastest solver to get top  10% routes (number of moves)
+2. Finding a solution with no backtrack operations
+3. Least number of moves. 
+(got 128 moves. (and 30 moves with the test path smoothing(not sure if it's allowed.)))
